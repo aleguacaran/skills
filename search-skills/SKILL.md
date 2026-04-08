@@ -1,6 +1,6 @@
 ---
 name: search-skills
-description: Comprehensive skill discovery tool that integrates multiple sources (skills.sh CLI, findskills CLI, GitHub MCP, GitLab MCP, Google Dorks) to find, analyze, and compare AI agent skills. Downloads skills to temp directory for analysis and provides recommendations.
+description: Comprehensive skill discovery tool that integrates multiple sources (skills.sh CLI, agentskill CLI, findskills CLI, GitHub MCP, GitLab MCP, Google Dorks) to find, analyze, and compare AI agent skills. Downloads skills to temp directory for analysis and provides recommendations.
 ---
 
 # Search Skills
@@ -27,7 +27,16 @@ Use this skill when:
 - Pros: Official skills.sh marketplace, install counts
 - Cons: Limited to skills.sh ecosystem
 
-### 2. findskills CLI (npx findskills)
+### 2. agentskill CLI (npx agentskill)
+
+- Command: `npx agentskill search <query>`
+- Docs: https://agentskill.sh/docs
+- MCP: `agentskill-mcp` (110k+ skills)
+- Output: skills with security scores, quality reviews, platform compatibility
+- Pros: Largest catalog (110k+), security analysis, quality metrics
+- Cons: Requires npx installation
+
+### 3. findskills CLI (npx findskills)
 
 - Command: `npx findskills <query>`
 - MCP: `findskills-mcp` (30k+ skills)
@@ -35,16 +44,15 @@ Use this skill when:
 - Pros: Large catalog (30k+), relevance ranking
 - Cons: Requires npx installation
 
-### 3. GitHub MCP Search
+### 4. GitHub MCP Search
 
-- MCP Server: github-huggingface-search-skills
-- Commands: `/github-search usecase <description>`, `/github-search topic <topic>`
-- API: GitHub REST API (`api.github.com/search/repositories`)
+- MCP Tools: Use GitHub MCP server tools available in the agent (search_repositories, get_file_contents)
+- API: GitHub REST API via MCP
 - Output: repos with SKILL.md, README analysis
 - Pros: Direct GitHub access, can find skills not in marketplaces
 - Cons: Requires filtering for valid skills
 
-### 4. GitLab MCP Search
+### 5. GitLab MCP Search
 
 - MCP Server: GitLab MCP server
 - API: GitLab REST API for projects with SKILL.md
@@ -52,7 +60,7 @@ Use this skill when:
 - Pros: Access to GitLab ecosystem
 - Cons: Smaller ecosystem than GitHub
 
-### 5. Google Dorks
+### 6. Google Dorks
 
 - Query: `site:skills.sh "<description>"`
 - Query: `site:github.com "SKILL.md" "<use case>" filetype:md`
@@ -81,12 +89,14 @@ Execute searches across all available sources simultaneously:
 # skills.sh CLI
 npx skills find "<query>"
 
+# agentskill CLI
+npx agentskill search "<query>"
+
 # findskills CLI
 npx findskills "<query>"
 
-# GitHub search (via MCP or API)
-# Use github-search skill if available
-/github-search usecase "<query>"
+# GitHub search (via MCP tools)
+# Use available GitHub MCP server tools to search repositories with SKILL.md
 
 # Google Dorks (manual web search)
 # Use web-search skill if available, or provide Google Dork queries
@@ -109,7 +119,7 @@ Create a unified results structure:
 
 ```json
 {
-  "source": "skills.sh|findskills|github|gitlab|google-dorks",
+  "source": "skills.sh|agentskill|findskills|github|gitlab|google-dorks",
   "name": "skill-name",
   "description": "skill description",
   "url": "https://...",
@@ -208,8 +218,9 @@ query="web scraping"
 
 # Step 2: Search all sources
 npx skills find "web scraping"
+npx agentskill search "web scraping"
 npx findskills "web scraping"
-/github-search usecase "web scraping agent skills"
+# GitHub MCP: search for repos with SKILL.md files
 # Google Dork: site:skills.sh "web scraping"
 
 # Step 3: Collect results
@@ -253,15 +264,12 @@ Found 5 skills for "web scraping":
 
 ### Optional MCP Servers
 
-- `findskills-mcp` - for findskills integration
-- `github-huggingface-search-skills` - for GitHub search
+- GitHub MCP server - for GitHub search
 - GitLab MCP server - for GitLab search
-- `web-search` (inference-sh/skills) - for Google Dorks execution
 
 ### Optional Skills
 
 - `find-skills` (vercel-labs/skills) - for skills.sh search
-- `github-huggingface-search-skills` (hsergiu) - for GitHub analysis
 
 ## Constraints
 
@@ -270,7 +278,7 @@ Found 5 skills for "web scraping":
 - **DO NOT** execute downloaded scripts - only read and analyze
 - **ALWAYS** clean up temp directories after analysis
 - **ALWAYS** ask user before downloading large repositories
-- **LIMIT** temp directory size to 500MB
+- **LIMIT** temp directory size to 10MB
 - **TIMEOUT** searches after 30 seconds per source
 
 ## Error Handling
