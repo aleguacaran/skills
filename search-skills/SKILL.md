@@ -27,9 +27,9 @@ Use this skill when:
 - Pros: Official skills.sh marketplace, install counts
 - Cons: Limited to skills.sh ecosystem
 
-### 2. agentskill CLI (npx agentskill)
+### 2. agentskill CLI (npx @agentskill.sh/cli)
 
-- Command: `npx agentskill search <query>`
+- Command: `npx @agentskill.sh/cli search <query>`
 - Docs: https://agentskill.sh/docs
 - MCP: `agentskill-mcp` (110k+ skills)
 - Output: skills with security scores, quality reviews, platform compatibility
@@ -90,7 +90,7 @@ Execute searches across all available sources simultaneously:
 npx skills find "<query>"
 
 # agentskill CLI
-npx agentskill search "<query>"
+npx @agentskill.sh/cli search "<query>"
 
 # findskills CLI
 npx findskills "<query>"
@@ -218,7 +218,7 @@ query="web scraping"
 
 # Step 2: Search all sources
 npx skills find "web scraping"
-npx agentskill search "web scraping"
+npx @agentskill.sh/cli search "web scraping"
 npx findskills "web scraping"
 # GitHub MCP: search for repos with SKILL.md files
 # Google Dork: site:skills.sh "web scraping"
