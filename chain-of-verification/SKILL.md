@@ -1,5 +1,5 @@
 ---
-name: chain-of-verification-pro
+name: chain-of-verification
 description: >-
   Reactive CoVe framework for hallucination reduction in AI agents.
   Auto-activates on high-precision tasks, code changes, or factual data.
@@ -7,7 +7,7 @@ description: >-
   Zero-memory validation with cognitive segmentation for reliable outputs.
 ---
 
-# Skill: Chain-of-Verification (CoVe) Pro
+# Skill: Chain-of-Verification (CoVe)
 
 ## Auto-Activation Triggers
 
@@ -157,7 +157,7 @@ Shows full cognitive process:
 - API usage correctness (documentation)
 - Performance implications (benchmarks)
 
-### Contextual Verification  
+### Contextual Verification
 - Codebase conventions (style guides)
 - Existing patterns (similar implementations)
 - Architectural alignment (system design)
