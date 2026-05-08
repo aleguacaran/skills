@@ -90,7 +90,7 @@ Execute searches across all available sources simultaneously:
 npx skills find "<query>"
 
 # agentskill CLI
-npx @agentskill.sh/cli search "<query>"
+npx @agentskill.sh/cli search --json "<query>"
 
 # findskills CLI
 npx findskills "<query>"
@@ -218,7 +218,7 @@ query="web scraping"
 
 # Step 2: Search all sources
 npx skills find "web scraping"
-npx @agentskill.sh/cli search "web scraping"
+npx @agentskill.sh/cli search --json "web scraping"
 npx findskills "web scraping"
 # GitHub MCP: search for repos with SKILL.md files
 # Google Dork: site:skills.sh "web scraping"
