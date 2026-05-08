@@ -20,6 +20,22 @@ Use this skill when the user requests to:
 
 ## Prerequisites Validation
 
+### Step 0: Input Safety Validation
+
+```bash
+# CRITICAL: Validate software name variable
+if [ -z "$SOFTWARE_NAME" ] || [ ${#SOFTWARE_NAME} -lt 3 ]; then
+    echo "ERROR: Software name too short or empty. Aborting for safety."
+    exit 1
+fi
+
+# Validate against system paths
+if [[ "$SOFTWARE_NAME" =~ ^(/|boot|dev|proc|sys|run|etc|usr|var|home|root)$ ]]; then
+    echo "ERROR: Software name matches system path. Aborting for safety."
+    exit 1
+fi
+```
+
 ### Step 1: System Verification
 
 Before proceeding, verify the system meets all requirements:
@@ -86,17 +102,30 @@ find /usr/local/bin /opt /usr/local/lib -name "*$SOFTWARE_NAME*" 2>/dev/null
 find $HOME/.local/bin $HOME/.local/lib -name "*$SOFTWARE_NAME*" 2>/dev/null
 ```
 
-### 1.4 Package Manager Specific Installations
+### 1.5 Snap and AppImage Detection
 
 ```bash
-# Check for Python packages
-pip list | grep -i "$SOFTWARE_NAME" && echo "Python package found"
+# Check for Snap packages
+if command -v snap >/dev/null 2>&1; then
+    snap list | grep -i "$SOFTWARE_NAME" && echo "Found Snap package"
+fi
 
-# Check for Node.js packages
-npm list -g | grep -i "$SOFTWARE_NAME" && echo "Node.js global package found"
+# Check for AppImage integrations
+find $HOME/.local/share/applications -name "*$SOFTWARE_NAME*.desktop" -exec grep -l "AppImage" {} + 2>/dev/null && echo "Found AppImage integration"
 
-# Check for Ruby gems
-gem list | grep -i "$SOFTWARE_NAME" && echo "Ruby gem found"
+# Check for actual AppImage files
+find $HOME/.local/bin /opt -name "*.AppImage" 2>/dev/null | grep -i "$SOFTWARE_NAME" && echo "Found AppImage file"
+```
+
+### 1.6 Fuzzy Name Matching
+
+```bash
+# Fuzzy search in pamac for similar names
+pamac search "$SOFTWARE_NAME" | head -n 5
+
+# Generate alternative name suggestions
+echo "Similar packages found:"
+pamac search "$SOFTWARE_NAME" | awk '{print $1}' | head -n 3
 ```
 
 ## Phase 2: Primary Uninstallation Execution
@@ -142,7 +171,17 @@ npm uninstall -g "$SOFTWARE_NAME"
 gem uninstall "$SOFTWARE_NAME"
 ```
 
-### 2.4 Manual Installation Removal
+### 2.4 Snap Package Removal
+
+```bash
+# Remove Snap package with data
+snap remove "$SOFTWARE_NAME" --purge
+
+# Verify removal
+snap list | grep -i "$SOFTWARE_NAME" || echo "Snap successfully removed"
+```
+
+### 2.5 Manual Installation Removal
 
 ```bash
 # Search for uninstall scripts
@@ -162,19 +201,36 @@ done
 
 After primary removal, perform comprehensive system-wide residue search:
 
-### 3.1 Configuration Files Search
+### 3.1 Optimized Configuration Files Search
 
 ```bash
-# User configuration directories
-find $HOME/.config -maxdepth 2 -name "*$SOFTWARE_NAME*" -type d 2>/dev/null
-find $HOME/.config -maxdepth 3 -name "*$SOFTWARE_NAME*" -type f 2>/dev/null
+# Define search hotspots (avoid global find)
+SEARCH_HOTSPOTS=(
+    "$HOME/.config"
+    "$HOME/.local/share"
+    "$HOME/.cache"
+    "/etc"
+    "/var/lib"
+    "/opt"
+    "/usr/local"
+    "/usr/share"
+)
 
-# User data directories
-find $HOME/.local/share -maxdepth 2 -name "*$SOFTWARE_NAME*" -type d 2>/dev/null
-find $HOME/.local/share -maxdepth 3 -name "*$SOFTWARE_NAME*" -type f 2>/dev/null
+# Search in hotspots only
+for hotspot in "${SEARCH_HOTSPOTS[@]}"; do
+    find "$hotspot" -maxdepth 3 -name "*$SOFTWARE_NAME*" -type d 2>/dev/null
+    find "$hotspot" -maxdepth 4 -name "*$SOFTWARE_NAME*" -type f 2>/dev/null
+done
 
-# User cache directories
-find $HOME/.cache -maxdepth 2 -name "*$SOFTWARE_NAME*" -type d 2>/dev/null
+# Alternative: Use faster tools if available
+if command -v fd >/dev/null 2>&1; then
+    fd --max-depth 4 "*$SOFTWARE_NAME*" /home 2>/dev/null
+    fd --max-depth 3 "*$SOFTWARE_NAME*" /etc 2>/dev/null
+fi
+
+if command -v locate >/dev/null 2>&1; then
+    locate -r "/$SOFTWARE_NAME" | grep -E "(config|cache|local)" 2>/dev/null
+fi
 ```
 
 ### 3.2 System Configuration Search
@@ -228,7 +284,12 @@ echo "$FOUND_FILES" | grep -vE "\.($PROTECTED_EXTENSIONS)$"
 PROTECTED_DIRS="projects|work|documents|desktop|downloads|music|videos|pictures|backup"
 
 # Exclude protected directories from deletion
-echo "$FOUND_DIRECTORIES" | grep -vE "($PROTECTED_DIRS)" 
+echo "$FOUND_DIRECTORIES" | grep -vE "($PROTECTED_DIRS)"
+
+# CRITICAL: Exclude system paths
+PROTECTED_SYSTEM_PATHS="/boot|/dev|/proc|/sys|/run"
+echo "$FOUND_FILES" | grep -vE "^($PROTECTED_SYSTEM_PATHS)"
+```
 ```
 
 ### 4.3 Project Detection Algorithm
@@ -243,7 +304,40 @@ for dir in $FOUND_DIRECTORIES; do
 done
 ```
 
-## Phase 5: User Confirmation and Report
+## Phase 5: Active Process Detection
+
+Before proceeding with uninstallation, check if the software is currently running:
+
+```bash
+# Check for running processes
+if pgrep -i "$SOFTWARE_NAME" >/dev/null 2>&1; then
+    echo "[WARNING] Software is currently running. Consider closing it first."
+    pgrep -i "$SOFTWARE_NAME"
+fi
+
+# Check for systemd services
+systemctl list-units --type=service --state=running | grep -i "$SOFTWARE_NAME" && echo "[WARNING] System service detected"
+```
+
+## Phase 6: Dependency Impact Analysis
+
+Check what other packages might be affected by the removal:
+
+```bash
+# Check reverse dependencies (requires pactree installation)
+if command -v pactree >/dev/null 2>&1; then
+    echo "[INFO] Checking reverse dependencies..."
+    pactree -r "$SOFTWARE_NAME" 2>/dev/null || echo "pactree analysis completed"
+else
+    echo "[INFO] Install pactree for dependency analysis: sudo pacman -S pacman-contrib"
+    echo "[INFO] pactree helps identify packages that depend on $SOFTWARE_NAME"
+fi
+
+# Alternative: Check with pamac
+pamac info "$SOFTWARE_NAME" | grep -A 10 "Required By"
+```
+
+## Phase 7: User Confirmation and Report
 
 Before any residue deletion, present detailed report to user:
 
@@ -279,7 +373,7 @@ Use AskUserQuestion to present options:
 
 **Choose action for residues:**
 1. Delete all marked residues
-2. Review each item individually  
+2. Review each item individually
 3. Backup residues before deletion
 4. Skip residue cleanup
 5. Show detailed file list
@@ -291,16 +385,29 @@ Based on user confirmation:
 ### 6.1 Safe Residue Removal
 
 ```bash
-# Remove configuration files
-rm -rf $HOME/.config/$SOFTWARE_NAME
-rm -rf /etc/$SOFTWARE_NAME
+# Prefer trash-cli if available for safety
+if command -v trash-put >/dev/null 2>&1; then
+    echo "[INFO] Moving files to trash (safer option)"
+    trash-put $HOME/.config/$SOFTWARE_NAME 2>/dev/null
+    trash-put /etc/$SOFTWARE_NAME 2>/dev/null
+    trash-put $HOME/.local/share/$SOFTWARE_NAME 2>/dev/null
+    trash-put /var/lib/$SOFTWARE_NAME 2>/dev/null
+    trash-put $HOME/.cache/$SOFTWARE_NAME 2>/dev/null
+else
+    echo "[WARNING] trash-cli not available, using permanent deletion"
+    echo "[INFO] Install trash-cli for safer operations: sudo pacman -S trash-cli"
 
-# Remove data files
-rm -rf $HOME/.local/share/$SOFTWARE_NAME  
-rm -rf /var/lib/$SOFTWARE_NAME
+    # Remove configuration files
+    rm -rf $HOME/.config/$SOFTWARE_NAME 2>/dev/null
+    rm -rf /etc/$SOFTWARE_NAME 2>/dev/null
 
-# Remove cache files
-rm -rf $HOME/.cache/$SOFTWARE_NAME
+    # Remove data files
+    rm -rf $HOME/.local/share/$SOFTWARE_NAME 2>/dev/null
+    rm -rf /var/lib/$SOFTWARE_NAME 2>/dev/null
+
+    # Remove cache files
+    rm -rf $HOME/.cache/$SOFTWARE_NAME 2>/dev/null
+fi
 ```
 
 ### 6.2 System File Cleanup
@@ -317,9 +424,19 @@ find /usr/share/icons -name "*$SOFTWARE_NAME*" -delete 2>/dev/null
 find /usr/share/man -name "*$SOFTWARE_NAME*" -delete 2>/dev/null
 ```
 
-## Phase 7: Final System Cleanup
+### 9.3 AUR Build Cleanup
 
-### 7.1 Orphaned Dependencies Removal
+```bash
+# Clear AUR build cache for this specific software
+find /var/tmp/pamac-build-* -maxdepth 1 -name "*$SOFTWARE_NAME*" -type d -exec rm -rf {} + 2>/dev/null
+
+# Clear makepkg build directories
+find /tmp/makepkg-* -maxdepth 1 -name "*$SOFTWARE_NAME*" -type d -exec rm -rf {} + 2>/dev/null
+```
+
+## Phase 10: Final Verification
+
+### 10.1 Orphaned Dependencies Removal
 
 ```bash
 # Remove orphaned packages
@@ -333,7 +450,7 @@ pamac clean --build-files
 pacman -Scc
 ```
 
-### 7.2 Final Verification
+### 10.2 Final Verification
 
 ```bash
 # Verify complete removal
