@@ -50,9 +50,6 @@ command -v pamac >/dev/null 2>&1 && echo "Pamac available" || echo "Pamac not fo
 # Check pacman as fallback
 command -v pacman >/dev/null 2>&1 && echo "Pacman available" || echo "Pacman not found"
 
-# Verify Flatpak support
-command -v flatpak >/dev/null 2>&1 && echo "Flatpak available" || echo "Flatpak not found"
-
 # Check system permissions
 [ "$(id -u)" = "0" ] && echo "Running as root" || echo "Running as user (sudo required)"
 ```
@@ -76,20 +73,7 @@ pacman -Qi "$SOFTWARE_NAME" 2>/dev/null && echo "Found in pacman"
 pamac info "$SOFTWARE_NAME" | grep -i "aur" && echo "AUR package detected"
 ```
 
-### 1.2 Flatpak Applications
-
-```bash
-# Search Flatpak installations
-flatpak list --app | grep -i "$SOFTWARE_NAME" && echo "Found Flatpak app"
-
-# Search Flatpak runtimes
-flatpak list --runtime | grep -i "$SOFTWARE_NAME" && echo "Found Flatpak runtime"
-
-# Get Flatpak ID for removal
-flatpak list --app | grep -i "$SOFTWARE_NAME" | cut -f1
-```
-
-### 1.3 Manual/External Installations
+### 1.2 Manual/External Installations
 
 ```bash
 # Locate binary in system paths
@@ -145,20 +129,7 @@ pacman -Rns "$SOFTWARE_NAME"
 pamac info "$SOFTWARE_NAME" 2>/dev/null || echo "Package successfully removed"
 ```
 
-### 2.2 Flatpak Removal
-
-```bash
-# Remove Flatpak application with data
-flatpak uninstall --delete-data "$FLATPAK_ID"
-
-# Remove unused runtimes
-flatpak uninstall --unused
-
-# Verify removal
-flatpak list | grep -i "$SOFTWARE_NAME" || echo "Flatpak successfully removed"
-```
-
-### 2.3 Language Package Managers
+### 2.2 Language Package Managers
 
 ```bash
 # Python package removal
@@ -221,17 +192,6 @@ for hotspot in "${SEARCH_HOTSPOTS[@]}"; do
     find "$hotspot" -maxdepth 3 -name "*$SOFTWARE_NAME*" -type d 2>/dev/null
     find "$hotspot" -maxdepth 4 -name "*$SOFTWARE_NAME*" -type f 2>/dev/null
 done
-
-# Alternative: Use faster tools if available
-if command -v fd >/dev/null 2>&1; then
-    fd --max-depth 4 "*$SOFTWARE_NAME*" /home 2>/dev/null
-    fd --max-depth 3 "*$SOFTWARE_NAME*" /etc 2>/dev/null
-fi
-
-if command -v locate >/dev/null 2>&1; then
-    locate -r "/$SOFTWARE_NAME" | grep -E "(config|cache|local)" 2>/dev/null
-fi
-```
 
 ### 3.2 System Configuration Search
 
@@ -498,7 +458,7 @@ echo "Disk space freed: $FREED_SPACE MB"
 ## Workflow Summary
 
 1. **System Verification** → Confirm Manjaro and required tools
-2. **Origin Detection** → Identify installation method (pamac/pacman/flatpak/manual)
+2. **Origin Detection** → Identify installation method (pamac/pacman/manual)
 3. **Primary Removal** → Execute appropriate uninstall command
 4. **Deep Scanning** → Search entire system for residues
 5. **Protection Filtering** → Exclude user projects and documents
