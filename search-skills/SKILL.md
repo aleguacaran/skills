@@ -1,6 +1,6 @@
 ---
 name: search-skills
-description: Comprehensive skill discovery tool that integrates multiple sources (skills.sh CLI, agentskill CLI, findskills CLI, GitHub MCP, GitLab MCP, Google Dorks) to find, analyze, and compare AI agent skills. Downloads skills to temp directory for analysis and provides recommendations.
+description: Comprehensive skill discovery tool that searches across multiple sources (skills.sh CLI, agentskill CLI, findskills CLI, GitHub MCP, GitLab MCP, Google Dorks) using a sequential fallback chain to find, analyze, and compare AI agent skills.
 ---
 
 # Search Skills
@@ -81,28 +81,16 @@ Examples:
 - "I need help with React testing" → query: "React testing"
 - "is there a skill for database optimization" → query: "database optimization"
 
-### Step 2: Search All Sources in Parallel
+### Step 2: Search Sources (Sequential Fallback Chain)
 
-Execute searches across all available sources simultaneously:
+Search sources in order, stopping when enough results are found:
 
-```bash
-# skills.sh CLI
-npx skills find "<query>"
-
-# agentskill CLI
-npx @agentskill.sh/cli search --json "<query>"
-
-# findskills CLI
-npx findskills "<query>"
-
-# GitHub search (via MCP tools)
-# Use available GitHub MCP server tools to search repositories with SKILL.md
-
-# Google Dorks (manual web search)
-# Use web-search skill if available, or provide Google Dork queries
-site:skills.sh "<query>"
-site:github.com "SKILL.md" "<query>" filetype:md
-```
+1. **skills.sh CLI** - fastest, has install counts. Run `npx skills find "<query>"`
+2. **agentskill CLI** - if results < 3, run `npx @agentskill.sh/cli search --json "<query>"`
+3. **findskills CLI** - if still < 3, run `npx findskills "<query>"`
+4. **GitHub MCP** - if npx sources return nothing, search via available GitHub MCP tools for repos with `SKILL.md`
+5. **GitLab MCP** - if GitHub MCP available but yields few results, search GitLab via its MCP server
+6. **Google Dorks** - last resort when all other sources fail; use web search with targeted queries
 
 ### Step 3: Collect and Normalize Results
 
@@ -115,24 +103,6 @@ For each source, extract:
 - Platform compatibility
 - Quality indicators (stars, installs, ratings)
 
-Create a unified results structure:
-
-```json
-{
-  "source": "skills.sh|agentskill|findskills|github|gitlab|google-dorks",
-  "name": "skill-name",
-  "description": "skill description",
-  "url": "https://...",
-  "install_command": "npx skills add ...",
-  "metadata": {
-    "installs": 1000,
-    "stars": 50,
-    "platforms": ["claude-code", "cursor"],
-    "last_updated": "2026-04-01"
-  }
-}
-```
-
 ### Step 4: Deduplicate Results
 
 Remove duplicate skills (same name or same repository) across sources. Keep the result with the most complete metadata.
@@ -142,18 +112,11 @@ Remove duplicate skills (same name or same repository) across sources. Keep the 
 If the user wants detailed comparison or if descriptions are insufficient:
 
 ```bash
-# Create temp directory
+# All public skills are git repositories; clone with depth 1
 TEMP_DIR=$(mktemp -d)
 
-# Download skills to temp dir
-for skill in "${unique_skills[@]}"; do
-  if [[ "$skill" == *"github.com"* ]]; then
-    # Clone repo
-    git clone --depth 1 "$skill" "$TEMP_DIR/$(basename $skill)"
-  elif [[ "$skill" == *"skills.sh"* ]]; then
-    # Use skills.sh to download
-    npx skills add "$skill" --download-only --target "$TEMP_DIR"
-  fi
+for url in "${skill_repo_urls[@]}"; do
+  git clone --depth 1 "$url" "$TEMP_DIR/$(basename "$url")"
 done
 ```
 
@@ -216,12 +179,13 @@ Provide:
 # Step 1: Parse query
 query="web scraping"
 
-# Step 2: Search all sources
+# Step 2: Search sources (sequential fallback)
 npx skills find "web scraping"
+# if < 3 results:
 npx @agentskill.sh/cli search --json "web scraping"
+# if still < 3 results:
 npx findskills "web scraping"
-# GitHub MCP: search for repos with SKILL.md files
-# Google Dork: site:skills.sh "web scraping"
+# if still nothing: use GitHub MCP
 
 # Step 3: Collect results
 # Results from skills.sh: web-scraper, puppeteer-automation
@@ -278,7 +242,6 @@ Found 5 skills for "web scraping":
 - **DO NOT** execute downloaded scripts - only read and analyze
 - **ALWAYS** clean up temp directories after analysis
 - **ALWAYS** ask user before downloading large repositories
-- **LIMIT** temp directory size to 10MB
 - **TIMEOUT** searches after 30 seconds per source
 
 ## Error Handling
@@ -292,12 +255,8 @@ Found 5 skills for "web scraping":
 ## Best Practices
 
 1. **Start with skills.sh** - it's the most reliable source with install counts
-2. **Use GitHub search** for skills not in marketplaces
-3. **Use Google Dorks** for semantic search when keyword search fails
-4. **Prioritize skills with SKILL.md** - indicates adherence to Agent Skills spec
-5. **Check compatibility** - ensure skill works with user's platform (Claude Code, Cursor, etc.)
-6. **Verify quality** - look for recent updates and good documentation
-7. **Provide alternatives** - never just one option unless it's clearly the best
+2. **Prioritize skills with SKILL.md** - indicates adherence to Agent Skills spec
+3. **Provide alternatives** - never just one option unless it's clearly the best
 
 ## Output Format
 
