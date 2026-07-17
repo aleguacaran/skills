@@ -4,6 +4,16 @@ Collection of custom AI agent skills for enhanced agent capabilities.
 
 ## Available Skills
 
+### chain-of-verification
+
+Reactive CoVe framework for hallucination reduction in AI agents. Implements: Context Analysis → Draft → Plan → Blind Verification → Synthesis. Zero-memory validation with cognitive segmentation.
+
+**Installation:**
+
+```bash
+npx skills add https://github.com/aleguacaran/skills --skill chain-of-verification
+```
+
 ### chrome-devtools-cli
 
 Browser automation, debugging, and performance analysis via Chrome DevTools MCP CLI. Wraps all 44+ MCP tools into bash commands with a persistent daemon model — no context bloat.
@@ -25,6 +35,16 @@ Browser automation, debugging, and performance analysis via Chrome DevTools MCP 
 
 ```bash
 npx skills add https://github.com/aleguacaran/skills --skill chrome-devtools-cli
+```
+
+### deep-uninstall-manjaro
+
+Technical and comprehensive agent skill for complete software removal in Manjaro Linux systems. Handles package dependencies, orphaned configs, and system-wide cleanup.
+
+**Installation:**
+
+```bash
+npx skills add https://github.com/aleguacaran/skills --skill deep-uninstall-manjaro
 ```
 
 ### search-skills
