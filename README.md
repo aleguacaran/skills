@@ -14,29 +14,6 @@ Reactive CoVe framework for hallucination reduction in AI agents. Implements: Co
 npx skills add https://github.com/aleguacaran/skills --skill chain-of-verification
 ```
 
-### chrome-devtools-cli
-
-Browser automation, debugging, and performance analysis via Chrome DevTools MCP CLI. Wraps all 44+ MCP tools into bash commands with a persistent daemon model — no context bloat.
-
-**Features:**
-
-- Navigate pages, click elements, fill forms, take screenshots
-- Inspect console errors (with source-mapped stacks)
-- Inspect network requests and responses
-- Run Lighthouse audits (accessibility, SEO, best practices)
-- Record and analyze performance traces (LCP, CLS, TBT)
-- Mobile emulation, device viewport, network throttling
-- Heap snapshot analysis (memory debugging)
-- Extension management (install, reload, trigger)
-- Screencast recording
-- Daemon model: start once, reuse browser state across all commands
-
-**Installation:**
-
-```bash
-npx skills add https://github.com/aleguacaran/skills --skill chrome-devtools-cli
-```
-
 ### deep-uninstall-manjaro
 
 Technical and comprehensive agent skill for complete software removal in Manjaro Linux systems. Handles package dependencies, orphaned configs, and system-wide cleanup.
