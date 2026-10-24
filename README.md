@@ -24,6 +24,25 @@ Technical and comprehensive agent skill for complete software removal in Manjaro
 npx skills add https://github.com/aleguacaran/skills --skill deep-uninstall-manjaro
 ```
 
+### esl-friendly
+
+Rewrite English text for non-native speakers (CEFR B2) without losing technical precision. Detects idioms, phrasal verbs, metaphors, and non-literal phrases, replaces them with literal English, and (in learn mode, the default) appends a mini-glossary so the reader learns the original expressions.
+
+**Features:**
+
+- Simplify the language, never the content: technical vocabulary, code, and identifiers stay untouched
+- `learn` mode (default): literal rewrite plus a glossary of the idioms replaced
+- `simple` mode: literal rewrite only
+- Standing-rule mode: write responses learner-friendly from the start, with inline glosses
+- Quick-answer format for "what does this phrase mean"
+- Reference tables: idioms, phrasal verbs, technical metaphors, false friends for Spanish speakers, and standard technical terms to keep as-is
+
+**Installation:**
+
+```bash
+npx skills add https://github.com/aleguacaran/skills --skill esl-friendly
+```
+
 ### search-skills
 
 Comprehensive skill discovery tool that integrates multiple sources for finding AI agent skills.
